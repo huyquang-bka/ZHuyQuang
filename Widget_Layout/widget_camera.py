@@ -9,27 +9,41 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import cv2
 from Process.Process_Capture import CaptureThread
+from Widget_Layout.widget_camera_setup import Widget_Camera_Item
 from queue import Queue
 
 
-class Ui_Camera(QtWidgets.QWidget):
+class Ui_Camera(Widget_Camera_Item):
 
-    def __init__(self, id, source):
+    def __init__(self):
         super().__init__()
-        self.setupUi()
-        self.id = id
-        self.source = source
         # queue
+        self.queue_output = Queue()
         self.queue_capture = Queue()
 
-        # thread
+    def setup(self, id, source):
+        self.id = id
+        self.source = source
+
+    def create_thread(self):
         self.thread_capture = CaptureThread(self.queue_capture, self.source)
 
-        # start thread
-        self.start_all_thread()
-
     def start_all_thread(self):
+        self.group_settings.hide()
+        self.camera_frame.show()
         self.thread_capture.start()
+
+    def stop_all_thread(self):
+        self.thread_capture.stop()
+        self.camera_frame.clear()
+        self.camera_frame.hide()
+        self.group_settings.show()
+
+    def paintEvent(self, event):
+        if self.queue_output.qsize() > 0:
+            current_frame = self.queue_output.get()
+            self.show_frame(self.camera_frame, current_frame)
+        self.update()
 
     def show_frame(self, frame_camera, current_frame):
         if current_frame is not None:
@@ -40,36 +54,12 @@ class Ui_Camera(QtWidgets.QWidget):
             frame_camera.setPixmap(qt_img)
             frame_camera.setScaledContents(True)
 
-    def paintEvent(self, event):
-        if self.queue_capture.qsize() > 0:
-            current_frame = self.queue_capture.get()
-            self.show_frame(self.qlabel_camera, current_frame)
-        self.update()
-
-    def setupUi(self):
-        self.setObjectName("Camera")
-        self.resize(400, 300)
-        self.gridLayout = QtWidgets.QGridLayout(self)
-        self.gridLayout.setObjectName("gridLayout")
-        self.qlabel_camera = QtWidgets.QLabel(self)
-        self.qlabel_camera.setStyleSheet("background: beige")
-        self.qlabel_camera.setObjectName("qlabel_camera")
-        self.gridLayout.addWidget(self.qlabel_camera, 0, 0, 1, 1)
-
-        self.retranslateUi()
-        QtCore.QMetaObject.connectSlotsByName(self)
-
-    def retranslateUi(self):
-        _translate = QtCore.QCoreApplication.translate
-        self.setWindowTitle(_translate("Camera", "Camera"))
-        self.qlabel_camera.setText(_translate("Camera", "qlabel_camera"))
-
 
 if __name__ == "__main__":
     import sys
 
     app = QtWidgets.QApplication(sys.argv)
     source = r"D:\ZHuyQuang\Video\a.mp4"
-    ui = Ui_Camera(source)
+    ui = Ui_Camera("1", source)
     ui.show()
     sys.exit(app.exec_())

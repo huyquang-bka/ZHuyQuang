@@ -10,9 +10,9 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from Widget_Layout.widget_layout_setup import Widget_Layout_Setup
-from Widget_Layout.widget_camera_item import Widget_Camera_Item
 from Widget_Layout.widget_camera import Ui_Camera
 import sqlite3
+import cv2
 
 
 class Ui_MainWindow(QtWidgets.QMainWindow):
@@ -36,9 +36,13 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.c = self.conn.cursor()
 
     def signal_connect(self):
-        self.btn_setup_layout.clicked.connect(self.slot_show_camera_layout)
+        # signal
         self.widget_layout_setup.sig_apply_layout.connect(self.slot_apply_layout)
+
+        # button
+        self.btn_setup_layout.clicked.connect(self.slot_show_camera_layout)
         self.btn_start_app.clicked.connect(self.slot_start_app)
+        self.btn_stop_app.clicked.connect(self.slot_stop_app)
 
     def setup_grid(self):
         self.grid_layout_cameras = QtWidgets.QGridLayout()
@@ -72,7 +76,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.wg_camera_items.clear()
 
     def create_camera(self, camera_id, setup_dict):
-        camera = Widget_Camera_Item()
+        camera = Ui_Camera()
         self.wg_camera_items.append(camera)
         if setup_dict:
             rtsp = setup_dict['rtsp']
@@ -100,21 +104,23 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             rtsp = widget.txt_rtsp.text()
             features = widget.combo_features.currentText()
             display = 1 if widget.cb_display.isChecked() else 0
-            self.c.execute("DELETE FROM test WHERE camera_id = ?", (id,))
+            self.c.execute("DELETE FROM setup_layout WHERE camera_id = ?", (id,))
             self.c.execute("INSERT INTO setup_layout VALUES (?, ?, ?, ?)", (id, rtsp, features, display))
+            self.widget_start(widget, id, rtsp)
         self.conn.commit()
 
-        self.start_app()
+    def slot_stop_app(self):
+        print(len(self.wg_camera_items))
+        for widget in self.wg_camera_items:
+            widget.stop_all_thread()
 
-    def start_app(self):
-        for idx, widget in enumerate(self.wg_camera_items):
-            id = widget.txt_camera_id.text()
-            rtsp = widget.txt_rtsp.text()
-            camera = Ui_Camera(id, rtsp)
-            self.wg_camera_items[idx].setLayout(camera.layout)
+    def widget_start(self, widget, id, rtsp):
+        widget.setup(id, rtsp)
+        widget.create_thread()
+        widget.start_all_thread()
 
     def setupUi(self):
-        self.setObjectName("MainWindow")
+        self.setObjectName("Main Window")
         self.resize(1382, 904)
         self.centralwidget = QtWidgets.QWidget(self)
         self.centralwidget.setStyleSheet("background-color: rgb(0, 85, 127);")
@@ -134,76 +140,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.menu.setObjectName("menu")
         self.gridLayout = QtWidgets.QGridLayout(self.menu)
         self.gridLayout.setObjectName("gridLayout")
-        self.qlabel_logo_atin = QtWidgets.QLabel(self.menu)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.qlabel_logo_atin.sizePolicy().hasHeightForWidth())
-        self.qlabel_logo_atin.setSizePolicy(sizePolicy)
-        self.qlabel_logo_atin.setMinimumSize(QtCore.QSize(0, 120))
-        self.qlabel_logo_atin.setMaximumSize(QtCore.QSize(16777215, 120))
-        self.qlabel_logo_atin.setStyleSheet("background: gray")
-        self.qlabel_logo_atin.setText("")
-        self.qlabel_logo_atin.setObjectName("qlabel_logo_atin")
-        self.gridLayout.addWidget(self.qlabel_logo_atin, 0, 0, 1, 1)
-        spacerItem = QtWidgets.QSpacerItem(20, 30, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
-        self.gridLayout.addItem(spacerItem, 1, 0, 1, 1)
-        self.btn_start_app = QtWidgets.QPushButton(self.menu)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.btn_start_app.sizePolicy().hasHeightForWidth())
-        self.btn_start_app.setSizePolicy(sizePolicy)
-        self.btn_start_app.setMinimumSize(QtCore.QSize(0, 40))
-        self.btn_start_app.setStyleSheet("QPushButton{\n"
-                                         "    background-color: rgb(170, 170, 0);\n"
-                                         "    border: none;\n"
-                                         "    border-radius: 10px\n"
-                                         "}\n"
-                                         "QPushButton:hover{\n"
-                                         "    background-color: rgb(109, 109, 0);\n"
-                                         "    border: none;\n"
-                                         "    border-radius: 10px\n"
-                                         "}")
-        self.btn_start_app.setObjectName("btn_start_app")
-        self.gridLayout.addWidget(self.btn_start_app, 3, 0, 1, 1)
-        self.btn_setup_layout = QtWidgets.QPushButton(self.menu)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.btn_setup_layout.sizePolicy().hasHeightForWidth())
-        self.btn_setup_layout.setSizePolicy(sizePolicy)
-        self.btn_setup_layout.setMinimumSize(QtCore.QSize(0, 40))
-        self.btn_setup_layout.setBaseSize(QtCore.QSize(0, 0))
-        font = QtGui.QFont()
-        font.setBold(False)
-        font.setItalic(False)
-        font.setUnderline(False)
-        font.setWeight(50)
-        font.setStrikeOut(False)
-        self.btn_setup_layout.setFont(font)
-        self.btn_setup_layout.setMouseTracking(False)
-        self.btn_setup_layout.setStyleSheet("QPushButton{\n"
-                                            "    background-color: rgb(170, 170, 0);\n"
-                                            "    border: none;\n"
-                                            "    border-radius: 10px\n"
-                                            "}\n"
-                                            "QPushButton:hover{\n"
-                                            "    background-color: rgb(109, 109, 0);\n"
-                                            "    border: none;\n"
-                                            "    border-radius: 10px\n"
-                                            "}")
-        self.btn_setup_layout.setInputMethodHints(QtCore.Qt.ImhNone)
-        icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(".\\../../Project-1/icon/setup_layout.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.btn_setup_layout.setIcon(icon)
-        self.btn_setup_layout.setIconSize(QtCore.QSize(25, 25))
-        self.btn_setup_layout.setDefault(False)
-        self.btn_setup_layout.setFlat(False)
-        self.btn_setup_layout.setObjectName("btn_setup_layout")
-        self.gridLayout.addWidget(self.btn_setup_layout, 2, 0, 1, 1)
-        spacerItem1 = QtWidgets.QSpacerItem(20, 30, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
-        self.gridLayout.addItem(spacerItem1, 5, 0, 1, 1)
         self.groupBox = QtWidgets.QGroupBox(self.menu)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
@@ -256,8 +192,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.qlabel_count_bike.setAlignment(QtCore.Qt.AlignCenter)
         self.qlabel_count_bike.setObjectName("qlabel_count_bike")
         self.gridLayout_2.addWidget(self.qlabel_count_bike, 1, 0, 1, 1)
-        spacerItem2 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
-        self.gridLayout_2.addItem(spacerItem2, 0, 0, 1, 1)
+        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
+        self.gridLayout_2.addItem(spacerItem, 0, 0, 1, 1)
         self.qlabel_vehicle_count_car = QtWidgets.QLabel(self.groupBox)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
@@ -276,8 +212,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.qlabel_vehicle_count_car.setAlignment(QtCore.Qt.AlignCenter)
         self.qlabel_vehicle_count_car.setObjectName("qlabel_vehicle_count_car")
         self.gridLayout_2.addWidget(self.qlabel_vehicle_count_car, 3, 1, 1, 1)
-        spacerItem3 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
-        self.gridLayout_2.addItem(spacerItem3, 2, 0, 1, 1)
+        spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
+        self.gridLayout_2.addItem(spacerItem1, 2, 0, 1, 1)
         self.qlabel_count_car = QtWidgets.QLabel(self.groupBox)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -296,9 +232,11 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.qlabel_count_car.setAlignment(QtCore.Qt.AlignCenter)
         self.qlabel_count_car.setObjectName("qlabel_count_car")
         self.gridLayout_2.addWidget(self.qlabel_count_car, 3, 0, 1, 1)
-        spacerItem4 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
-        self.gridLayout_2.addItem(spacerItem4, 4, 0, 1, 1)
-        self.gridLayout.addWidget(self.groupBox, 7, 0, 1, 1)
+        spacerItem2 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
+        self.gridLayout_2.addItem(spacerItem2, 4, 0, 1, 1)
+        self.gridLayout.addWidget(self.groupBox, 8, 0, 1, 1)
+        spacerItem3 = QtWidgets.QSpacerItem(20, 30, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
+        self.gridLayout.addItem(spacerItem3, 1, 0, 1, 1)
         self.btn_search = QtWidgets.QPushButton(self.menu)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -317,7 +255,95 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                                       "    border-radius: 10px\n"
                                       "}")
         self.btn_search.setObjectName("btn_search")
-        self.gridLayout.addWidget(self.btn_search, 4, 0, 1, 1)
+        self.gridLayout.addWidget(self.btn_search, 5, 0, 1, 1)
+        self.btn_start_app = QtWidgets.QPushButton(self.menu)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.btn_start_app.sizePolicy().hasHeightForWidth())
+        self.btn_start_app.setSizePolicy(sizePolicy)
+        self.btn_start_app.setMinimumSize(QtCore.QSize(0, 40))
+        self.btn_start_app.setStyleSheet("QPushButton{\n"
+                                         "    background-color: rgb(170, 170, 0);\n"
+                                         "    border: none;\n"
+                                         "    border-radius: 10px\n"
+                                         "}\n"
+                                         "QPushButton:hover{\n"
+                                         "    background-color: rgb(109, 109, 0);\n"
+                                         "    border: none;\n"
+                                         "    border-radius: 10px\n"
+                                         "}")
+        self.btn_start_app.setObjectName("btn_start_app")
+        self.gridLayout.addWidget(self.btn_start_app, 3, 0, 1, 1)
+        spacerItem4 = QtWidgets.QSpacerItem(20, 30, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
+        self.gridLayout.addItem(spacerItem4, 6, 0, 1, 1)
+        self.qlabel_logo_atin = QtWidgets.QLabel(self.menu)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.qlabel_logo_atin.sizePolicy().hasHeightForWidth())
+        self.qlabel_logo_atin.setSizePolicy(sizePolicy)
+        self.qlabel_logo_atin.setMinimumSize(QtCore.QSize(0, 120))
+        self.qlabel_logo_atin.setMaximumSize(QtCore.QSize(16777215, 120))
+        self.qlabel_logo_atin.setStyleSheet("background: gray\n"
+                                            "")
+        self.qlabel_logo_atin.setText("")
+        self.qlabel_logo_atin.setObjectName("qlabel_logo_atin")
+        self.gridLayout.addWidget(self.qlabel_logo_atin, 0, 0, 1, 1)
+        self.btn_setup_layout = QtWidgets.QPushButton(self.menu)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.btn_setup_layout.sizePolicy().hasHeightForWidth())
+        self.btn_setup_layout.setSizePolicy(sizePolicy)
+        self.btn_setup_layout.setMinimumSize(QtCore.QSize(0, 40))
+        self.btn_setup_layout.setBaseSize(QtCore.QSize(0, 0))
+        font = QtGui.QFont()
+        font.setBold(False)
+        font.setItalic(False)
+        font.setUnderline(False)
+        font.setWeight(50)
+        font.setStrikeOut(False)
+        self.btn_setup_layout.setFont(font)
+        self.btn_setup_layout.setMouseTracking(False)
+        self.btn_setup_layout.setStyleSheet("QPushButton{\n"
+                                            "    background-color: rgb(170, 170, 0);\n"
+                                            "    border: none;\n"
+                                            "    border-radius: 10px\n"
+                                            "}\n"
+                                            "QPushButton:hover{\n"
+                                            "    background-color: rgb(109, 109, 0);\n"
+                                            "    border: none;\n"
+                                            "    border-radius: 10px\n"
+                                            "}")
+        self.btn_setup_layout.setInputMethodHints(QtCore.Qt.ImhNone)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap("../../Project-1/icon/setup_layout.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.btn_setup_layout.setIcon(icon)
+        self.btn_setup_layout.setIconSize(QtCore.QSize(25, 25))
+        self.btn_setup_layout.setDefault(False)
+        self.btn_setup_layout.setFlat(False)
+        self.btn_setup_layout.setObjectName("btn_setup_layout")
+        self.gridLayout.addWidget(self.btn_setup_layout, 2, 0, 1, 1)
+        self.btn_stop_app = QtWidgets.QPushButton(self.menu)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.btn_stop_app.sizePolicy().hasHeightForWidth())
+        self.btn_stop_app.setSizePolicy(sizePolicy)
+        self.btn_stop_app.setMinimumSize(QtCore.QSize(0, 40))
+        self.btn_stop_app.setStyleSheet("QPushButton{\n"
+                                        "    background-color: rgb(170, 170, 0);\n"
+                                        "    border: none;\n"
+                                        "    border-radius: 10px\n"
+                                        "}\n"
+                                        "QPushButton:hover{\n"
+                                        "    background-color: rgb(109, 109, 0);\n"
+                                        "    border: none;\n"
+                                        "    border-radius: 10px\n"
+                                        "}")
+        self.btn_stop_app.setObjectName("btn_stop_app")
+        self.gridLayout.addWidget(self.btn_stop_app, 4, 0, 1, 1)
         self.layout_main.addWidget(self.menu, 0, 0, 1, 1)
         self.scrollArea_info = QtWidgets.QScrollArea(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
@@ -356,6 +382,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.btn_start_app.setText(_translate("MainWindow", "Start App"))
+        self.btn_stop_app.setText(_translate("MainWindow", "Stop App"))
         self.btn_setup_layout.setText(_translate("MainWindow", "Setup Layout"))
         self.qlabel_vehicle_count_bike.setText(_translate("MainWindow", "0"))
         self.qlabel_vehicle_count_car.setText(_translate("MainWindow", "0"))
