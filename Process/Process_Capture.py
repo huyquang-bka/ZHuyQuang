@@ -3,7 +3,7 @@ import time
 import cv2
 
 
-class CaptureThread(QtCore.QThread):
+class ThreadCapture(QtCore.QThread):
 
     def __init__(self, queue_capture, source):
         super().__init__()

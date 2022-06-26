@@ -44,7 +44,7 @@ class Tracking():
         self.line_thickness = 1  # bounding box thickness (pixels)
         self.hide_labels = False  # hide labels
         self.hide_conf = False  # hide confidences
-        self.half = True  # use FP16 half-precision inference
+        self.half = False  # use FP16 half-precision inference
         self.dnn = False  # use OpenCV DNN for ONNX inference
         self.save_dir = None
         self.save_txt = False
