@@ -1,0 +1,43 @@
+from PyQt5 import QtCore
+import time
+import cv2
+from Yolov5.detect_yolov5 import Detection
+
+
+class ThreadTracking(QtCore.QThread):
+
+    def __init__(self, queue_tracking, queue_plate_brand_color):
+        super().__init__()
+        self.__thread_active = False
+
+        # queue
+        self.queue_tracking = queue_tracking
+        self.queue_plate_brand_color = queue_plate_brand_color
+
+        # tracking
+        self.tracking = Detection()
+        self.setup_detection()
+
+    def setup_detection(self):
+        weights = "Weight/yolov5s.pt"
+        classes = [2, 7]
+        conf = 0.2
+        imgsz = 640
+        device = "cpu"
+        self.tracking.setup_model(weights, classes, conf, imgsz, device)
+
+    def run(self):
+        self.__thread_active = True
+        print('Starting Tracking Thread...')
+        while self.__thread_active:
+            if self.queue_capture.qsize() > 0:
+                frame = self.queue_capture.get()
+                id_dict = self.tracking.detect(frame)
+                if self.queue_tracking.qsize() < 1:
+                    self.queue_tracking.put([frame, id_dict])
+            QtCore.QThread.msleep(1)
+
+    def stop(self):
+        print('Stopping Capture Thread')
+        self.__thread_active = False
+        self.cap.release()
