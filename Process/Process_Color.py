@@ -2,7 +2,7 @@ from PyQt5 import QtCore
 import time
 import cv2
 from Color.classify import Classifier
-from Polygon.Polygon import plate_polygon
+from Polygon.Polygon import plate_polygon, detect_polygon
 
 
 class ThreadColor(QtCore.QThread):
@@ -22,6 +22,10 @@ class ThreadColor(QtCore.QThread):
         x1, y1, x2, y2 = box
         return cv2.pointPolygonTest(plate_polygon, ((x1 + x2) // 2, y2), False) > 0
 
+    def is_in_detect_zone(self, box):
+        x1, y1, x2, y2 = box
+        return cv2.pointPolygonTest(detect_polygon, ((x1 + x2) // 2, y2), False) > 0
+
     def most_frequent(self, ls):
         try:
             return max(set(ls), key=ls.count)
@@ -39,7 +43,7 @@ class ThreadColor(QtCore.QThread):
                 for id, bbox in id_dict.items():
                     box = bbox[:4]
                     x1, y1, x2, y2, cls = bbox
-                    if int(cls) not in [2, 7]:
+                    if int(cls) not in [2, 7] or not self.is_in_detect_zone(box):
                         continue
                     crop = frame[y1:y2, x1:x2]
                     if self.is_in_plate_zone(box):
@@ -53,12 +57,9 @@ class ThreadColor(QtCore.QThread):
                         list_key = list(color_dict.keys())
                         for k in list_key:
                             color_dict[k].append(" ")
-                            print(color_dict[k])
                             color = self.most_frequent(color_dict[k])
                             result_dict[id] = color
                             del color_dict[k]
-                if result_dict:
-                    print(result_dict)
                 if self.queue_color.qsize() < 1 and result_dict:
                     self.queue_color.put(result_dict)
             QtCore.QThread.msleep(1)
@@ -66,4 +67,3 @@ class ThreadColor(QtCore.QThread):
     def stop(self):
         print('Stopping Color Thread')
         self.__thread_active = False
-        self.cap.release()

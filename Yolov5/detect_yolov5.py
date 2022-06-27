@@ -31,7 +31,7 @@ def relu(x):
 
 class Tracking():
     def __init__(self):
-        self.model_file = 'lp_final.pt'
+        self.model_file = 'lp.pt'
         self.data = 'yolov5/data/coco128.yaml'  # dataset.yaml path
         self.imgsz = 640  # inference size (height, width)
         self.conf_thres = 0.5  # confidence threshold
@@ -117,7 +117,7 @@ class Tracking():
 
 class Detection():
     def __init__(self):
-        self.model_file = 'lp_final.pt'
+        self.model_file = 'lp.pt'
         # self.data = 'yolov5/data/coco128.yaml'  # dataset.yaml path
         self.imgsz = 640  # inference size (height, width)
         self.conf_thres = 0.5  # confidence threshold
@@ -179,39 +179,54 @@ class Detection():
 
                     for *xyxy, conf, cls in reversed(det):
                         x1, y1, x2, y2 = list(map(relu, xyxy))
-                        detect_list.append([x1, y1, x2, y2, self.names[int(cls)]])
+                        detect_list.append([x1, y1, x2, y2, self.names[int(cls)], float(conf)])
             return detect_list
 
 
 if __name__ == '__main__':
-    tracking = Tracking()
-    weight_path = r"../Weight/yolov5s.pt"
-    classes = [2, 7]
-    conf = 0.3
+    detection = Detection()
+    weight_path = r"Weight/digit.pt"
+    classes = None
+    conf = 0.5
     imgsz = 640
     device = "0"
-    tracking.setup_model(weight_path, classes, conf, imgsz, device)
-    cap = cv2.VideoCapture(r"D:\ZHuyQuang\Video\a.mp4")
-    t = time.time()
-    count = 0
-    fps = 0
-    while True:
-        if time.time() - t > 1:
-            fps = count
-            t = time.time()
-            count = 0
-        ret, frame = cap.read()
-        if not ret:
-            break
-        count += 1
-        id_dict = tracking.detect(frame)
-        for id in id_dict:
-            x1, y1, x2, y2, category = id_dict[id]
-            x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.putText(frame, str(id), (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-        cv2.putText(frame, "FPS: " + str(fps), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-        frame = cv2.resize(frame, (640, 480))
-        cv2.imshow("frame", frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+    detection.setup_model(weight_path, classes, conf, imgsz, device)
+    # cap = cv2.VideoCapture(r"D:\ZHuyQuang\Video\a.mp4")
+    # t = time.time()
+    # count = 0
+    # fps = 0
+    # while True:
+    #     if time.time() - t > 1:
+    #         fps = count
+    #         t = time.time()
+    #         count = 0
+    #     ret, frame = cap.read()
+    #     if not ret:
+    #         break
+    #     count += 1
+    #     id_dict = tracking.detect(frame)
+    #     for id in id_dict:
+    #         x1, y1, x2, y2, category = id_dict[id]
+    #         x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+    #         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+    #         cv2.putText(frame, str(id), (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    #     cv2.putText(frame, "FPS: " + str(fps), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    #     frame = cv2.resize(frame, (640, 480))
+    #     cv2.imshow("frame", frame)
+    #     if cv2.waitKey(1) & 0xFF == ord('q'):
+    #         break
+
+    for imageName in os.listdir("Crop"):
+        # image = cv2.imread("download.jpg")
+        image = cv2.imread("Crop/" + imageName)
+        bboxes = detection.detect(image)
+        lp_text = ""
+        for bbox in sorted(bboxes, key=lambda x: x[0]):
+            x, y, w, h = bbox[0], bbox[1], bbox[2], bbox[3]
+            cls = bbox[4]
+            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.putText(image, cls, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            lp_text += cls
+        print(lp_text)
+        cv2.imshow("Image", image)
+        cv2.waitKey(0)

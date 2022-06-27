@@ -2,7 +2,7 @@ from PyQt5 import QtCore
 import time
 import cv2
 from Yolov5.detect_yolov5 import Detection
-from Polygon.Polygon import plate_polygon
+from Polygon.Polygon import plate_polygon, detect_polygon
 
 
 class ThreadBrand(QtCore.QThread):
@@ -31,6 +31,10 @@ class ThreadBrand(QtCore.QThread):
         x1, y1, x2, y2 = box
         return cv2.pointPolygonTest(plate_polygon, ((x1 + x2) // 2, y2), False) > 0
 
+    def is_in_detect_zone(self, box):
+        x1, y1, x2, y2 = box
+        return cv2.pointPolygonTest(detect_polygon, ((x1 + x2) // 2, y2), False) > 0
+
     def most_frequent(self, ls):
         try:
             return max(set(ls), key=ls.count)
@@ -48,7 +52,7 @@ class ThreadBrand(QtCore.QThread):
                 for id, bbox in id_dict.items():
                     box = bbox[:4]
                     x1, y1, x2, y2, cls = bbox
-                    if int(cls) not in [2, 7]:
+                    if int(cls) not in [2, 7] or not self.is_in_detect_zone(box):
                         continue
                     crop = frame[y1:y2, x1:x2]
                     if self.is_in_plate_zone(box):
@@ -58,7 +62,7 @@ class ThreadBrand(QtCore.QThread):
                             brand_dict[id] = []
                         brand_list = self.brand_detection.detect(crop)
                         if brand_list:
-                            brand = brand_list[0][-1].split("____")[1]
+                            brand = brand_list[0][4].split("____")[1]
                             brand_dict[id].append(brand)
                     else:
                         if (y1 + y2) / 2 > 700:
@@ -68,8 +72,6 @@ class ThreadBrand(QtCore.QThread):
                                 brand = self.most_frequent(brand_dict[k])
                                 result_dict[id] = brand
                                 del brand_dict[k]
-                if result_dict:
-                    print(result_dict)
                 if self.queue_brand.qsize() < 1 and result_dict:
                     self.queue_brand.put(result_dict)
             QtCore.QThread.msleep(1)
@@ -77,4 +79,3 @@ class ThreadBrand(QtCore.QThread):
     def stop(self):
         print('Stopping Brand Thread')
         self.__thread_active = False
-        self.cap.release()
