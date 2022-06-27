@@ -179,7 +179,7 @@ class Detection():
 
                     for *xyxy, conf, cls in reversed(det):
                         x1, y1, x2, y2 = list(map(relu, xyxy))
-                        detect_list.append([x1, y1, x2, y2, self.names[int(cls)], float(conf)])
+                        detect_list.append([x1, y1, x2, y2, self.names[int(cls)]])
             return detect_list
 
 

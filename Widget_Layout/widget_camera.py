@@ -11,6 +11,8 @@ import cv2
 from Process.Process_Capture import ThreadCapture
 from Process.Process_Tracking import ThreadTracking
 from Process.Process_Show import ThreadShow
+from Process.Process_Brand import ThreadBrand
+from Process.Process_Color import ThreadColor
 
 from Widget_Layout.widget_camera_setup import Widget_Camera_Item
 from queue import Queue
@@ -22,7 +24,17 @@ class Ui_Camera(Widget_Camera_Item):
         super().__init__()
         # queue
         self.queue_capture = Queue()
+
+        # queue tracking
         self.queue_tracking = Queue()
+        self.queue_tracking_for_plate = Queue()
+        self.queue_tracking_for_brand = Queue()
+        self.queue_tracking_for_color = Queue()
+        self.queue_tracking_for_speed = Queue()
+
+        # queue output
+        self.queue_brand = Queue()
+        self.queue_color = Queue()
         self.queue_output = Queue()
 
     def setup(self, id, source):
@@ -31,7 +43,11 @@ class Ui_Camera(Widget_Camera_Item):
 
     def create_thread(self):
         self.thread_capture = ThreadCapture(self.queue_capture, self.source)
-        self.thread_tracking = ThreadTracking(self.queue_capture, self.queue_tracking)
+        self.thread_tracking = ThreadTracking(self.queue_capture, self.queue_tracking, self.queue_tracking_for_plate,
+                                              self.queue_tracking_for_brand, self.queue_tracking_for_color,
+                                              self.queue_tracking_for_speed)
+        self.thread_brand = ThreadBrand(self.queue_tracking_for_brand, self.queue_brand)
+        self.thread_color = ThreadColor(self.queue_tracking_for_color, self.queue_color)
 
         self.thread_show = ThreadShow(self.queue_tracking, self.queue_output)
 
@@ -39,18 +55,20 @@ class Ui_Camera(Widget_Camera_Item):
         # show frame
         self.group_settings.hide()
         self.camera_frame.show()
-        
+
         # start thread
         self.thread_capture.start()
         self.thread_tracking.start()
         self.thread_show.start()
+        self.thread_brand.start()
+        self.thread_color.start()
 
     def stop_all_thread(self):
         # stop thread
         self.thread_capture.stop()
         self.thread_tracking.stop()
         self.thread_show.stop()
-        
+
         # show setting group
         self.camera_frame.clear()
         self.camera_frame.hide()
