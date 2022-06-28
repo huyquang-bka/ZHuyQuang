@@ -19,6 +19,8 @@ class ThreadBrand(QtCore.QThread):
         self.brand_detection = Detection()
         self.setup_brand_detection()
 
+        self.middle_height = 400
+
     def setup_brand_detection(self):
         weights = "Weight/brand.pt"
         classes = None
@@ -65,7 +67,7 @@ class ThreadBrand(QtCore.QThread):
                             brand = brand_list[0][4].split("____")[1]
                             brand_dict[id].append(brand)
                     else:
-                        if (y1 + y2) / 2 > 700:
+                        if (y1 + y2) / 2 > self.middle_height:
                             list_key = list(brand_dict.keys())
                             for k in list_key:
                                 brand_dict[k].append(" ")

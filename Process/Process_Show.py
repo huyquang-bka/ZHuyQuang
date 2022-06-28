@@ -13,6 +13,13 @@ class ThreadShow(QtCore.QThread):
         self.queue_tracking = queue_tracking
         self.queue_output = queue_output
 
+        # signal
+        self.summary_dict = {}
+
+    def slot_summary(self, summary_dict):
+        self.summary_dict = summary_dict
+        print(self.summary_dict)
+
     def draw(self, frame, id_dict):
         for k, v in id_dict.items():
             x1, y1, x2, y2, category = v
@@ -33,4 +40,3 @@ class ThreadShow(QtCore.QThread):
     def stop(self):
         print('Stopping Capture Thread')
         self.__thread_active = False
-        self.cap.release()

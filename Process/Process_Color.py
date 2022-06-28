@@ -18,6 +18,8 @@ class ThreadColor(QtCore.QThread):
         # tracking
         self.color_detection = Classifier("Color/color.mnn", "Color/labels-color.txt")
 
+        self.middle_height = 400
+
     def is_in_plate_zone(self, box):
         x1, y1, x2, y2 = box
         return cv2.pointPolygonTest(plate_polygon, ((x1 + x2) // 2, y2), False) > 0
@@ -53,7 +55,7 @@ class ThreadColor(QtCore.QThread):
                             color_dict[id] = []
                         color, conf = self.color_detection.predict(crop)
                         color_dict[id].append(color)
-                    elif (y1 + y2) / 2 > 700:
+                    elif (y1 + y2) / 2 > self.middle_height:
                         list_key = list(color_dict.keys())
                         for k in list_key:
                             color_dict[k].append(" ")
@@ -61,6 +63,7 @@ class ThreadColor(QtCore.QThread):
                             result_dict[id] = color
                             del color_dict[k]
                 if self.queue_color.qsize() < 1 and result_dict:
+                    print(result_dict)
                     self.queue_color.put(result_dict)
             QtCore.QThread.msleep(1)
 

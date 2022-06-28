@@ -42,7 +42,6 @@ class ThreadTracking(QtCore.QThread):
             if self.queue_capture.qsize() > 0:
                 frame = self.queue_capture.get()
                 id_dict = self.tracking.detect(frame)
-
                 self.put_to_queue(self.queue_tracking, [frame, id_dict])
                 self.put_to_queue(self.queue_tracking_for_brand, [frame, id_dict])
                 self.put_to_queue(self.queue_tracking_for_color, [frame, id_dict])
@@ -54,4 +53,3 @@ class ThreadTracking(QtCore.QThread):
     def stop(self):
         print('Stopping Capture Thread')
         self.__thread_active = False
-        self.cap.release()

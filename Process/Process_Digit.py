@@ -22,6 +22,8 @@ class ThreadDigit(QtCore.QThread):
 
         self.allow_lp = string.ascii_uppercase + string.digits
 
+        self.middle_height = 400
+
     def setup_digit_detection(self):
         weights = "Weight/digit.pt"
         classes = None
@@ -88,15 +90,16 @@ class ThreadDigit(QtCore.QThread):
                     count += 1
                     box, plate_box = bbox
                     x1, y1, x2, y2 = box
-
                     if not plate_box:
-                        if (y1 + y2) // 2 > 700:
+                        if (y1 + y2) // 2 > self.middle_height:
                             list_key = list(digit_dict.keys())
                             for k in list_key:
                                 digit_dict[k].append(" ")
                                 lp_text = self.most_frequent(digit_dict[k])
                                 result_dict[k] = lp_text
+                                del digit_dict[k]
                             if self.queue_digit.qsize() < 1:
+                                print(result_dict)
                                 self.queue_digit.put(result_dict)
                         continue
 
@@ -118,7 +121,6 @@ class ThreadDigit(QtCore.QThread):
                     if len(lp_text) < 7:
                         continue
                     digit_dict[id].append(lp_text)
-
             QtCore.QThread.msleep(1)
 
     def stop(self):

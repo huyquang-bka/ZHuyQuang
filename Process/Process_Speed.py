@@ -33,9 +33,6 @@ class ThreadSpeed(QtCore.QThread):
             if n > 20:
                 for i in list(sorted(speed_dict.keys()))[:n - 20]:
                     del speed_dict[i]
-            if n_ > 20:
-                for i in list(sorted(real_speed_dict.keys()))[:n_ - 20]:
-                    del real_speed_dict[i]
             if self.queue_tracking_for_speed.qsize() > 0:
                 frame, id_dict = self.queue_tracking_for_speed.get()
                 for id, bbox in id_dict.items():
@@ -52,7 +49,7 @@ class ThreadSpeed(QtCore.QThread):
                         real_speed_dict[id] = int(self.distance / (time.time() - f) * 3.6)
                         del speed_dict[id]
 
-                if self.queue_speed.qsize() < 1:
+                if self.queue_speed.qsize() < 1 and real_speed_dict:
                     self.queue_speed.put(real_speed_dict)
             QtCore.QThread.msleep(1)
 
