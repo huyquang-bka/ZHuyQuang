@@ -111,7 +111,7 @@ class ThreadDigit(QtCore.QThread):
                     x1_, y1_, x2_, y2_, cls_, conf_ = plate_box
                     crop = frame[y1:y2, x1:x2]
                     lp_crop = crop[y1_:y2_, x1_:x2_]
-                    cv2.imwrite(f"Crop/{id}_{count}.jpg", lp_crop)
+                    # cv2.imwrite(f"Crop/{id}_{count}.jpg", lp_crop)
                     digit_list = self.digit_detection.detect(lp_crop)
                     digit_list = sorted(digit_list, key=lambda x: x[0])
                     is_square = self.is_square_lp(lp_crop)
