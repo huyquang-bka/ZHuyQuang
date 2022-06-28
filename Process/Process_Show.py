@@ -19,12 +19,16 @@ class ThreadShow(QtCore.QThread):
 
     def slot_summary(self, summary_dict):
         self.summary_dict = summary_dict
+        print(summary_dict)
 
     def draw(self, frame, id_dict):
         for k, v in id_dict.items():
             x1, y1, x2, y2, category = v
             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
             cv2.putText(frame, str(k), (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            if k in self.summary_dict.keys():
+                color, brand, lp, speed = self.summary_dict[k]
+                cv2.putText(frame, f"{color} {brand}", (x1, y1 + 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
     def is_in_plate_zone(self, box):
         x1, y1, x2, y2 = box

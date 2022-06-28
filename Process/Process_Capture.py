@@ -8,7 +8,7 @@ class ThreadCapture(QtCore.QThread):
     def __init__(self, queue_capture, source):
         super().__init__()
         self.queue_capture = queue_capture
-        self.source = source
+        self.source = source.replace('\\', '/')
         self.__thread_active = False
 
     def run(self):

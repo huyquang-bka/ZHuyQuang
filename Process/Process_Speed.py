@@ -50,6 +50,7 @@ class ThreadSpeed(QtCore.QThread):
                         del speed_dict[id]
 
                 if self.queue_speed.qsize() < 1 and real_speed_dict:
+                    # print("Speed: ", real_speed_dict)
                     self.queue_speed.put(real_speed_dict)
             QtCore.QThread.msleep(1)
 

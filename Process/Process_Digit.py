@@ -93,13 +93,13 @@ class ThreadDigit(QtCore.QThread):
                     if not plate_box:
                         if (y1 + y2) // 2 > self.middle_height:
                             list_key = list(digit_dict.keys())
-                            for k in list_key:
-                                digit_dict[k].append(" ")
-                                lp_text = self.most_frequent(digit_dict[k])
-                                result_dict[k] = lp_text
-                                del digit_dict[k]
-                            if self.queue_digit.qsize() < 1:
-                                print(result_dict)
+                            if id in list_key:
+                                # digit_dict[k].append(" ")
+                                lp_text = self.most_frequent(digit_dict[id])
+                                result_dict[id] = lp_text
+                                del digit_dict[id]
+                            if self.queue_digit.qsize() < 1 and result_dict:
+                                # print("Digit: ", digit_dict)
                                 self.queue_digit.put(result_dict)
                         continue
 

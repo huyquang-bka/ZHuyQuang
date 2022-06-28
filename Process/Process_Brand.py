@@ -69,11 +69,11 @@ class ThreadBrand(QtCore.QThread):
                     else:
                         if (y1 + y2) / 2 > self.middle_height:
                             list_key = list(brand_dict.keys())
-                            for k in list_key:
-                                brand_dict[k].append(" ")
-                                brand = self.most_frequent(brand_dict[k])
+                            if id in list_key:
+                                # brand_dict[k].append(" ")
+                                brand = self.most_frequent(brand_dict[id])
                                 result_dict[id] = brand
-                                del brand_dict[k]
+                                del brand_dict[id]
                 if self.queue_brand.qsize() < 1 and result_dict:
                     self.queue_brand.put(result_dict)
             QtCore.QThread.msleep(1)

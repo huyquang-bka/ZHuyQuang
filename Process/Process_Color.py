@@ -57,13 +57,13 @@ class ThreadColor(QtCore.QThread):
                         color_dict[id].append(color)
                     elif (y1 + y2) / 2 > self.middle_height:
                         list_key = list(color_dict.keys())
-                        for k in list_key:
-                            color_dict[k].append(" ")
-                            color = self.most_frequent(color_dict[k])
+                        if id in list_key:
+                            # color_dict[k].append(" ")
+                            color = self.most_frequent(color_dict[id])
                             result_dict[id] = color
-                            del color_dict[k]
+                            del color_dict[id]
                 if self.queue_color.qsize() < 1 and result_dict:
-                    print(result_dict)
+                    # print("Color: ", color_dict)
                     self.queue_color.put(result_dict)
             QtCore.QThread.msleep(1)
 

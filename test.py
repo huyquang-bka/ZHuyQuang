@@ -1,11 +1,16 @@
-from queue import Queue
+import cv2
+import os
 
-count = 0
+path = "D:\Company\ZHuyQuang\Video\veh06.mp4"
+path = os.path.join(os.path.abspath(path), "")
+print(path)
+cap = cv2.VideoCapture(path)
 
-test_queue = Queue(maxsize=1)
-
-for i in range(2):
-    test_queue.put(i)
-
-print(test_queue.get())
-print(test_queue.get())
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        cap = cv2.VideoCapture(path)
+        continue
+    cv2.imshow("frame", frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
