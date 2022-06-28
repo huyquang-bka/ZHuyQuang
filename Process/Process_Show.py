@@ -1,6 +1,7 @@
 from PyQt5 import QtCore
 import time
 import cv2
+from Polygon.Polygon import detect_polygon, plate_polygon
 
 
 class ThreadShow(QtCore.QThread):
@@ -18,13 +19,20 @@ class ThreadShow(QtCore.QThread):
 
     def slot_summary(self, summary_dict):
         self.summary_dict = summary_dict
-        print(self.summary_dict)
 
     def draw(self, frame, id_dict):
         for k, v in id_dict.items():
             x1, y1, x2, y2, category = v
             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
             cv2.putText(frame, str(k), (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+    def is_in_plate_zone(self, box):
+        x1, y1, x2, y2 = box
+        return cv2.pointPolygonTest(plate_polygon, ((x1 + x2) // 2, y2), False) > 0
+
+    def is_in_detect_zone(self, box):
+        x1, y1, x2, y2 = box
+        return cv2.pointPolygonTest(detect_polygon, ((x1 + x2) // 2, y2), False) > 0
 
     def run(self):
         self.__thread_active = True
