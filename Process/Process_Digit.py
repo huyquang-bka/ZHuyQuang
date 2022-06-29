@@ -94,7 +94,7 @@ class ThreadDigit(QtCore.QThread):
                         if (y1 + y2) // 2 > self.middle_height:
                             list_key = list(digit_dict.keys())
                             if id in list_key:
-                                # digit_dict[k].append(" ")
+                                digit_dict[id].append(" ")
                                 lp_text = self.most_frequent(digit_dict[id])
                                 result_dict[id] = lp_text
                                 del digit_dict[id]

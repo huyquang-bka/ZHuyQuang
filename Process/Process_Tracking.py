@@ -7,7 +7,7 @@ from Yolov5.detect_yolov5 import Tracking
 class ThreadTracking(QtCore.QThread):
 
     def __init__(self, queue_capture, queue_tracking, queue_tracking_for_plate, queue_tracking_for_brand,
-                 queue_tracking_for_color, queue_tracking_for_speed):
+                 queue_tracking_for_color, queue_tracking_for_speed, queue_tracking_for_count):
         super().__init__()
         self.__thread_active = False
 
@@ -18,6 +18,7 @@ class ThreadTracking(QtCore.QThread):
         self.queue_tracking_for_brand = queue_tracking_for_brand
         self.queue_tracking_for_color = queue_tracking_for_color
         self.queue_tracking_for_speed = queue_tracking_for_speed
+        self.queue_tracking_for_count = queue_tracking_for_count
 
         # tracking
         self.tracking = Tracking()
@@ -25,7 +26,7 @@ class ThreadTracking(QtCore.QThread):
 
     def setup_tracking(self):
         weights = "Weight/yolov5s.pt"
-        classes = [2, 7]
+        classes = [2, 3, 7]
         conf = 0.2
         imgsz = 640
         device = "0"
@@ -42,11 +43,18 @@ class ThreadTracking(QtCore.QThread):
             if self.queue_capture.qsize() > 0:
                 frame = self.queue_capture.get()
                 id_dict = self.tracking.detect(frame)
+                raw_id_dict = id_dict.copy()
+                self.put_to_queue(self.queue_tracking_for_count, [frame, raw_id_dict])
+                list_id = list(id_dict.keys())
+                for k in list_id:
+                    category = id_dict[k][-1]
+                    if int(category) == 3:
+                        del id_dict[k]
                 self.put_to_queue(self.queue_tracking, [frame, id_dict])
-                self.put_to_queue(self.queue_tracking_for_brand, [frame, id_dict])
-                self.put_to_queue(self.queue_tracking_for_color, [frame, id_dict])
+                # self.put_to_queue(self.queue_tracking_for_brand, [frame, id_dict])
+                # self.put_to_queue(self.queue_tracking_for_color, [frame, id_dict])
                 self.put_to_queue(self.queue_tracking_for_plate, [frame, id_dict])
-                self.put_to_queue(self.queue_tracking_for_speed, [frame, id_dict])
+                # self.put_to_queue(self.queue_tracking_for_speed, [frame, id_dict])
 
             QtCore.QThread.msleep(1)
 

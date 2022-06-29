@@ -11,6 +11,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from Widget_Layout.widget_layout_setup import Widget_Layout_Setup
 from Widget_Layout.widget_camera import Ui_Camera
+from Widget_Layout.widget_vehicle_info import Ui_Vehicle_Info
 import sqlite3
 import cv2
 
@@ -34,6 +35,54 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         # database
         self.conn = sqlite3.connect('Database/atin.db')
         self.c = self.conn.cursor()
+
+        # add widget to scroll area
+        self.list_vehicle_widget = []
+        self.count_add_to_widget = 0
+        for i in range(8):
+            vehicle_widget = Ui_Vehicle_Info()
+            self.list_vehicle_widget.append(vehicle_widget)
+            self.scrollAreaWidgetContents.layout().addWidget(vehicle_widget)
+
+        # count
+        self.count_motor = 0
+        self.count_car = 0
+
+    def slot_count_motor(self, count):
+        self.count_motor += 1
+        self.qlabel_vehicle_count_bike.setText(str(self.count_motor))
+
+    def slot_count_car(self, count):
+        self.count_car += 1
+        self.qlabel_vehicle_count_car.setText(str(self.count_car))
+
+    def slot_vehicle_info(self, vehicle_info):
+        # if self.count_add_to_widget < 8:
+        widget = self.list_vehicle_widget[self.count_add_to_widget % 8]
+        widget = self.add_info_to_widget(widget, vehicle_info)
+        self.count_add_to_widget += 1
+
+    def add_info_to_widget(self, widget, vehicle_info):
+        color = vehicle_info['color']
+        brand = vehicle_info['brand']
+        plate = vehicle_info['plate']
+        speed = vehicle_info['speed']
+        crop = vehicle_info['crop']
+        date_time = vehicle_info['date_time']
+        widget.qlabel_color.setText(color)
+        widget.qlabel_brand.setText(brand)
+        widget.qlabel_plate.setText(plate)
+        widget.qlabel_speed.setText(speed)
+        widget.qlabel_time.setText(date_time)
+        if crop is not None:
+            crop = cv2.resize(crop, (200, 200))
+            crop = cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)
+            qt_img = QtGui.QPixmap.fromImage(
+                QtGui.QImage(crop.data, crop.shape[1], crop.shape[0], QtGui.QImage.Format_RGB888)).scaled(
+                widget.qlabel_image_car.width(), widget.qlabel_image_car.height())
+            widget.qlabel_image_car.setPixmap(qt_img)
+            widget.qlabel_image_car.setScaledContents(True)
+        return widget
 
     def signal_connect(self):
         # signal
@@ -117,11 +166,15 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     def widget_start(self, widget, id, rtsp):
         widget.setup(id, rtsp)
         widget.create_thread()
+        widget.thread_show.sig_info_vehicle.connect(self.slot_vehicle_info)
+        widget.thread_counting.sig_count_motor.connect(self.slot_count_motor)
+        widget.thread_counting.sig_count_car.connect(self.slot_count_car)
         widget.start_all_thread()
 
     def setupUi(self):
         self.setObjectName("Main Window")
-        self.resize(1382, 904)
+        # self.resize(1382, 904)
+        self.setWindowState(QtCore.Qt.WindowMaximized)
         self.centralwidget = QtWidgets.QWidget(self)
         self.centralwidget.setStyleSheet("background-color: rgb(0, 85, 127);")
         self.centralwidget.setObjectName("centralwidget")
@@ -356,12 +409,15 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.scrollArea_info.setWidgetResizable(True)
         self.scrollArea_info.setObjectName("scrollArea_info")
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 1362, 248))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 887, 218))
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
-        self.gridLayout_3 = QtWidgets.QGridLayout(self.scrollAreaWidgetContents)
-        self.gridLayout_3.setObjectName("gridLayout_3")
+        # self.gridLayout_3 = QtWidgets.QGridLayout(self.scrollAreaWidgetContents)
+        # self.gridLayout_3.setObjectName("gridLayout_3")
         self.scrollArea_info.setWidget(self.scrollAreaWidgetContents)
-        self.layout_main.addWidget(self.scrollArea_info, 1, 0, 1, 3)
+        # self.layout_main.addWidget(self.scrollArea_info, 1, 0, 1, 3)
+        self.verticalLayout = QtWidgets.QHBoxLayout(self.scrollAreaWidgetContents)
+        self.verticalLayout.setObjectName("H_Layout")
+        self.layout_main.addWidget(self.scrollArea_info, 1, 0, 1, 2)
         self.frame_cameras = QtWidgets.QFrame(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)

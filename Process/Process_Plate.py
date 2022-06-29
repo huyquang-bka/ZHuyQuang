@@ -7,13 +7,14 @@ from Polygon.Polygon import plate_polygon, detect_polygon
 
 class ThreadPlate(QtCore.QThread):
 
-    def __init__(self, queue_tracking_for_plate, queue_plate):
+    def __init__(self, queue_tracking_for_plate, queue_plate, queue_plate_for_plate_color):
         super().__init__()
         self.__thread_active = False
 
         # queue
         self.queue_tracking_for_plate = queue_tracking_for_plate
         self.queue_plate = queue_plate
+        self.queue_plate_for_plate_color = queue_plate_for_plate_color
 
         # tracking
         self.plate_detection = Detection()
@@ -56,6 +57,8 @@ class ThreadPlate(QtCore.QThread):
                     plate_dict[id] = [box, plate_box]
                 if self.queue_plate.qsize() < 1:
                     self.queue_plate.put([frame, plate_dict])
+                if self.queue_plate_for_plate_color.qsize() < 1:
+                    self.queue_plate_for_plate_color.put([frame, plate_dict])
             QtCore.QThread.msleep(1)
 
     def stop(self):

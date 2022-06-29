@@ -17,6 +17,8 @@ from Process.Process_Plate import ThreadPlate
 from Process.Process_Digit import ThreadDigit
 from Process.Process_Speed import ThreadSpeed
 from Process.Process_Summary import ThreadSummary
+from Process.Process_Plate_Color import ThreadPlateColor
+from Process.Process_Counting import ThreadCounting
 
 from Widget_Layout.widget_camera_setup import Widget_Camera_Item
 from queue import Queue
@@ -38,6 +40,9 @@ class Ui_Camera(Widget_Camera_Item):
 
         # queue output
         self.queue_plate = Queue()
+        self.queue_plate_for_plate_color = Queue()
+        self.queue_for_tracking_count = Queue()
+        self.queue_plate_color = Queue()
         self.queue_brand = Queue()
         self.queue_color = Queue()
         self.queue_digit = Queue()
@@ -52,13 +57,17 @@ class Ui_Camera(Widget_Camera_Item):
         self.thread_capture = ThreadCapture(self.queue_capture, self.source)
         self.thread_tracking = ThreadTracking(self.queue_capture, self.queue_tracking, self.queue_tracking_for_plate,
                                               self.queue_tracking_for_brand, self.queue_tracking_for_color,
-                                              self.queue_tracking_for_speed)
-        self.thread_plate = ThreadPlate(self.queue_tracking_for_plate, self.queue_plate)
-        self.thread_brand = ThreadBrand(self.queue_tracking_for_brand, self.queue_brand)
-        self.thread_color = ThreadColor(self.queue_tracking_for_color, self.queue_color)
+                                              self.queue_tracking_for_speed, self.queue_for_tracking_count)
+        self.thread_plate = ThreadPlate(self.queue_tracking_for_plate, self.queue_plate,
+                                        self.queue_plate_for_plate_color)
+        # self.thread_brand = ThreadBrand(self.queue_tracking_for_brand, self.queue_brand)
+        # self.thread_color = ThreadColor(self.queue_tracking_for_color, self.queue_color)
         self.thread_digit = ThreadDigit(self.queue_plate, self.queue_digit)
-        self.thread_speed = ThreadSpeed(self.queue_tracking_for_speed, self.queue_speed)
-        self.thread_summary = ThreadSummary(self.queue_color, self.queue_brand, self.queue_digit, self.queue_speed)
+        # self.thread_plate_color = ThreadPlateColor(self.queue_plate_for_plate_color, self.queue_plate_color)
+        # self.thread_speed = ThreadSpeed(self.queue_tracking_for_speed, self.queue_speed)
+        self.thread_counting = ThreadCounting(self.queue_for_tracking_count)
+        self.thread_summary = ThreadSummary(self.queue_color, self.queue_brand, self.queue_digit, self.queue_speed,
+                                            self.queue_plate_color)
         self.thread_show = ThreadShow(self.queue_tracking, self.queue_output)
 
         self.connect_signal()
@@ -76,10 +85,12 @@ class Ui_Camera(Widget_Camera_Item):
         self.thread_tracking.start()
         self.thread_show.start()
         self.thread_plate.start()
-        self.thread_brand.start()
-        self.thread_color.start()
+        self.thread_counting.start()
+        # self.thread_brand.start()
+        # self.thread_color.start()
         self.thread_digit.start()
-        self.thread_speed.start()
+        # self.thread_plate_color.start()
+        # self.thread_speed.start()
         self.thread_summary.start()
 
     def stop_all_thread(self):

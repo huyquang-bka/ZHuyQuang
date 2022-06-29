@@ -6,7 +6,7 @@ import cv2
 class ThreadSummary(QtCore.QThread):
     sig_summary = QtCore.pyqtSignal(dict)
 
-    def __init__(self, queue_color, queue_brand, queue_digit, queue_speed):
+    def __init__(self, queue_color, queue_brand, queue_digit, queue_speed, queue_plate_color):
         super().__init__()
         self.__thread_active = False
 
@@ -15,11 +15,12 @@ class ThreadSummary(QtCore.QThread):
         self.queue_brand = queue_brand
         self.queue_digit = queue_digit
         self.queue_speed = queue_speed
+        self.queue_plate_color = queue_plate_color
 
     def get_info(self, dictionary, summary_dict, index):
         for k, v in dictionary.items():
             if k not in list(summary_dict.keys()):
-                summary_dict[k] = ["", "", "", ""]
+                summary_dict[k] = ["", "", "", "", ""]
                 summary_dict[k][index] = v
             else:
                 if v:
@@ -43,6 +44,9 @@ class ThreadSummary(QtCore.QThread):
             if self.queue_speed.qsize() > 0:
                 speed_dict = self.queue_speed.get()
                 summary_dict = self.get_info(speed_dict, summary_dict, 3)
+            if self.queue_plate_color.qsize() > 0:
+                plate_color_dict = self.queue_plate_color.get()
+                summary_dict = self.get_info(plate_color_dict, summary_dict, 4)
             if summary_dict:
                 self.sig_summary.emit(summary_dict)
             QtCore.QThread.msleep(1)

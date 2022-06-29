@@ -70,7 +70,7 @@ class ThreadBrand(QtCore.QThread):
                         if (y1 + y2) / 2 > self.middle_height:
                             list_key = list(brand_dict.keys())
                             if id in list_key:
-                                # brand_dict[k].append(" ")
+                                brand_dict[id].append(" ")
                                 brand = self.most_frequent(brand_dict[id])
                                 result_dict[id] = brand
                                 del brand_dict[id]

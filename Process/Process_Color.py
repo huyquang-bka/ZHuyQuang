@@ -58,7 +58,7 @@ class ThreadColor(QtCore.QThread):
                     elif (y1 + y2) / 2 > self.middle_height:
                         list_key = list(color_dict.keys())
                         if id in list_key:
-                            # color_dict[k].append(" ")
+                            color_dict[id].append(" ")
                             color = self.most_frequent(color_dict[id])
                             result_dict[id] = color
                             del color_dict[id]
