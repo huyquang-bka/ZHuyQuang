@@ -1,5 +1,6 @@
-Video
+Video/*
 venv
 .idea
 __pycache__
 .DS_Store
+Video_Storage/*

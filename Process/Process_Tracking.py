@@ -27,7 +27,7 @@ class ThreadTracking(QtCore.QThread):
     def setup_tracking(self):
         weights = "Weight/yolov5s.pt"
         classes = [2, 3, 7]
-        conf = 0.2
+        conf = 0.5
         imgsz = 640
         device = "0"
         self.tracking.setup_model(weights, classes, conf, imgsz, device)
@@ -42,18 +42,19 @@ class ThreadTracking(QtCore.QThread):
         while self.__thread_active:
             if self.queue_capture.qsize() > 0:
                 frame = self.queue_capture.get()
+                frame_copy = frame.copy()
                 id_dict = self.tracking.detect(frame)
                 raw_id_dict = id_dict.copy()
-                self.put_to_queue(self.queue_tracking_for_count, [frame, raw_id_dict])
+                self.put_to_queue(self.queue_tracking_for_count, [frame_copy, raw_id_dict])
                 list_id = list(id_dict.keys())
                 for k in list_id:
                     category = id_dict[k][-1]
                     if int(category) == 3:
                         del id_dict[k]
-                self.put_to_queue(self.queue_tracking, [frame, id_dict])
+                self.put_to_queue(self.queue_tracking, [frame_copy, id_dict])
                 # self.put_to_queue(self.queue_tracking_for_brand, [frame, id_dict])
                 # self.put_to_queue(self.queue_tracking_for_color, [frame, id_dict])
-                self.put_to_queue(self.queue_tracking_for_plate, [frame, id_dict])
+                self.put_to_queue(self.queue_tracking_for_plate, [frame_copy, id_dict])
                 # self.put_to_queue(self.queue_tracking_for_speed, [frame, id_dict])
 
             QtCore.QThread.msleep(1)

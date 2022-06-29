@@ -19,6 +19,7 @@ from Process.Process_Speed import ThreadSpeed
 from Process.Process_Summary import ThreadSummary
 from Process.Process_Plate_Color import ThreadPlateColor
 from Process.Process_Counting import ThreadCounting
+from Process.Process_Save_Video import ThreadSaveVideo
 
 from Widget_Layout.widget_camera_setup import Widget_Camera_Item
 from queue import Queue
@@ -66,6 +67,7 @@ class Ui_Camera(Widget_Camera_Item):
         # self.thread_plate_color = ThreadPlateColor(self.queue_plate_for_plate_color, self.queue_plate_color)
         # self.thread_speed = ThreadSpeed(self.queue_tracking_for_speed, self.queue_speed)
         self.thread_counting = ThreadCounting(self.queue_for_tracking_count)
+        self.thread_save_video = ThreadSaveVideo()
         self.thread_summary = ThreadSummary(self.queue_color, self.queue_brand, self.queue_digit, self.queue_speed,
                                             self.queue_plate_color)
         self.thread_show = ThreadShow(self.queue_tracking, self.queue_output)
@@ -74,6 +76,7 @@ class Ui_Camera(Widget_Camera_Item):
 
     def connect_signal(self):
         self.thread_summary.sig_summary.connect(self.thread_show.slot_summary)
+        self.thread_counting.sig_video_car.connect(self.thread_save_video.slot_save_video)
 
     def start_all_thread(self):
         # show frame
@@ -86,6 +89,7 @@ class Ui_Camera(Widget_Camera_Item):
         self.thread_show.start()
         self.thread_plate.start()
         self.thread_counting.start()
+        self.thread_save_video.start()
         # self.thread_brand.start()
         # self.thread_color.start()
         self.thread_digit.start()
