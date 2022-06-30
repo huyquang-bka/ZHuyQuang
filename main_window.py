@@ -12,6 +12,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from Widget_Layout.widget_layout_setup import Widget_Layout_Setup
 from Widget_Layout.widget_camera import Ui_Camera
 from Widget_Layout.widget_vehicle_info import Ui_Vehicle_Info
+from Widget_Layout.widget_search import Ui_Search
 import sqlite3
 import cv2
 
@@ -25,7 +26,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         # widget
         self.widget_layout_setup = Widget_Layout_Setup()
-
+        self.ui_search = Ui_Search()
         # grid
         self.setup_grid()
 
@@ -33,7 +34,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.signal_connect()
 
         # database
-        self.conn = sqlite3.connect('Database/atin.db')
+        self.conn = sqlite3.connect('Database/atin.db', check_same_thread=False)
         self.c = self.conn.cursor()
 
         # add widget to scroll area
@@ -63,25 +64,33 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.count_add_to_widget += 1
 
     def add_info_to_widget(self, widget, vehicle_info):
-        color = vehicle_info['color']
-        brand = vehicle_info['brand']
+        # color = vehicle_info['color']
+        # brand = vehicle_info['brand']
         plate = vehicle_info['plate']
-        speed = vehicle_info['speed']
+        id = vehicle_info['id']
+        # speed = vehicle_info['speed']
         crop = vehicle_info['crop']
         date_time = vehicle_info['date_time']
-        widget.qlabel_color.setText(color)
-        widget.qlabel_brand.setText(brand)
+        plate_color = vehicle_info['plate_color']
+        # widget.qlabel_color.setText(color)
+        # widget.qlabel_brand.setText(brand)
         widget.qlabel_plate.setText(plate)
-        widget.qlabel_speed.setText(speed)
+        # widget.qlabel_speed.setText(speed)
+        widget.qlabel_plate_color.setText(plate_color)
         widget.qlabel_time.setText(date_time)
         if crop is not None:
             crop = cv2.resize(crop, (200, 200))
+            cv2.imwrite("Crop/{}.jpg".format(id), crop)
             crop = cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)
             qt_img = QtGui.QPixmap.fromImage(
                 QtGui.QImage(crop.data, crop.shape[1], crop.shape[0], QtGui.QImage.Format_RGB888)).scaled(
-                widget.qlabel_image_car.width(), widget.qlabel_image_car.height())
-            widget.qlabel_image_car.setPixmap(qt_img)
-            widget.qlabel_image_car.setScaledContents(True)
+                widget.qlabel_icon_car.width(), widget.qlabel_icon_car.height())
+            widget.qlabel_icon_car.setPixmap(qt_img)
+            widget.qlabel_icon_car.setScaledContents(True)
+        self.c.execute("delete from information where plate = ?", (plate,))
+        command = f"insert into information(id_car, plate, plate_color, type, date) values({id}, '{plate}', '{plate_color}', 'type', '{date_time}')"
+        self.c.execute(command)
+        self.conn.commit()
         return widget
 
     def signal_connect(self):
@@ -92,6 +101,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.btn_setup_layout.clicked.connect(self.slot_show_camera_layout)
         self.btn_start_app.clicked.connect(self.slot_start_app)
         self.btn_stop_app.clicked.connect(self.slot_stop_app)
+        self.btn_search.clicked.connect(self.slot_search)
 
     def setup_grid(self):
         self.grid_layout_cameras = QtWidgets.QGridLayout()
@@ -162,6 +172,12 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         print(len(self.wg_camera_items))
         for widget in self.wg_camera_items:
             widget.stop_all_thread()
+
+    def slot_search(self):
+        self.ui_search.db = r"Database\atin.db"
+        self.ui_search.db_to_df()
+        self.ui_search.show_table()
+        self.ui_search.show()
 
     def widget_start(self, widget, id, rtsp):
         widget.setup(id, rtsp)

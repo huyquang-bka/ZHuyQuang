@@ -64,7 +64,7 @@ class Ui_Camera(Widget_Camera_Item):
         # self.thread_brand = ThreadBrand(self.queue_tracking_for_brand, self.queue_brand)
         # self.thread_color = ThreadColor(self.queue_tracking_for_color, self.queue_color)
         self.thread_digit = ThreadDigit(self.queue_plate, self.queue_digit)
-        # self.thread_plate_color = ThreadPlateColor(self.queue_plate_for_plate_color, self.queue_plate_color)
+        self.thread_plate_color = ThreadPlateColor(self.queue_plate_for_plate_color, self.queue_plate_color)
         # self.thread_speed = ThreadSpeed(self.queue_tracking_for_speed, self.queue_speed)
         self.thread_counting = ThreadCounting(self.queue_for_tracking_count)
         self.thread_save_video = ThreadSaveVideo()
@@ -93,7 +93,7 @@ class Ui_Camera(Widget_Camera_Item):
         # self.thread_brand.start()
         # self.thread_color.start()
         self.thread_digit.start()
-        # self.thread_plate_color.start()
+        self.thread_plate_color.start()
         # self.thread_speed.start()
         self.thread_summary.start()
 

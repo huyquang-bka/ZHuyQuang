@@ -69,7 +69,7 @@ class ThreadShow(QtCore.QThread):
                                 crop = None
                             date_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                             emit_dict = {"color": color, "brand": brand, "plate": plate, "speed": str(speed),
-                                         "crop": crop, "date_time": date_time}
+                                         "crop": crop, "date_time": date_time, "plate_color": plate_color, "id": k}
                             self.sig_info_vehicle.emit(emit_dict)
                             del self.summary_dict[k]
             QtCore.QThread.msleep(1)

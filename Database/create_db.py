@@ -3,9 +3,9 @@ import sqlite3
 conn = sqlite3.connect('atin.db')
 c = conn.cursor()
 
-c.execute("DROP TABLE IF EXISTS test")
+c.execute("DROP TABLE IF EXISTS information")
 c.execute(
-    """CREATE TABLE test (id INTEGER PRIMARY KEY AUTOINCREMENT, camera_id TEXT, rtsp TEXT, features TEXT, display INTEGER)""")
+    """CREATE TABLE information (id_car INT, plate TEXT, plate_color TEXT, type TEXT, date TEXT)""")
 
 # c.execute("INSERT INTO parking VALUES (1, 'ABC123', 'RED', 'TOYOTA', '2020-01-01', '2020-01-01', 'image/path')")
 

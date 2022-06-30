@@ -4,8 +4,8 @@ conn = sqlite3.connect('atin.db')
 c = conn.cursor()
 
 # command = f"insert into test(camera_id, rtsp, features, display) values('123', '123', '123', '123')"
-command = "select * from setup_layout"
-id = "123"
+command = "select * from information"
+# id = "123"
 # command = f"DELETE FROM setup_layout WHERE camera_id={id}"
 c.execute(command)
 conn.commit()
